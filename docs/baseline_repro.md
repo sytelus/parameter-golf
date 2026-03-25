@@ -21,6 +21,28 @@ compared to the original baseline's reported val_bpb of **1.2244**.
 - The dataset contains 8B tokens (80 shards); our run wrapped around ~1.3 times.
 - The challenge has no explicit token limit — tokens are implicitly bounded by the 600s wallclock on 8xH100.
 
+**Why our results don't exactly match the original baseline:**
+
+The Naive Baseline was run on an **older dataset export** that is no longer available on HuggingFace.
+This was confirmed by examining all submissions' training logs:
+
+| Factor | Naive Baseline (old export) | Our run (current HF export) |
+|--------|---------------------------|---------------------------|
+| Validation tokens | 63,779,840 | 62,021,632 |
+| Training shards | 25 | 80 |
+| Step 0 val_bpb (untrained) | 4.0978 | 4.1077 |
+
+The Naive Baseline is the **only submission** that used the old dataset. Every submission from
+March 18 onward (including all leaderboard records) uses the current export with 62M val tokens.
+This means BPB scores between the Naive Baseline and all other submissions are not on identical
+evaluation sets. The step-0 BPB difference (4.0978 vs 4.1077) is entirely due to the validation
+set change — the model weights are identical (same seed, same init).
+
+At matching step counts (1K-12K), our run is consistently ~0.003 BPB worse than the baseline,
+which is attributable to the combination of different validation set and different training data
+ordering (25 vs 80 shards). After step 12,580, the gap widens because the original entered
+wallclock-based warmdown while our iteration-based warmdown didn't begin until step 18,800.
+
 ---
 
 ## Challenge Constraints Validation
